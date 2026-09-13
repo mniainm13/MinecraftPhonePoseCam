@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp"
+    android:background="#0B1220">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="AR 调试"
+        android:textSize="22sp"
+        android:textStyle="bold"
+        android:textColor="#E8EEF8" />
+
+    <TextView
+        android:id="@+id/textArState"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:fontFamily="monospace"
+        android:textSize="14sp"
+        android:textColor="#7DDEA2"
+        android:text="state=idle" />
+
+    <TextView
+        android:id="@+id/textArPose"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:fontFamily="monospace"
+        android:textSize="14sp"
+        android:textColor="#E8EEF8" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnArToggle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:text="启动 AR" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnArCal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:text="重置原点"
+        style="@style/Widget.Material3.Button.TonalButton" />
+
+    <com.google.android.material.materialswitch.MaterialSwitch
+        android:id="@+id/switchSmooth"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:text="1€ 滤波"
+        android:checked="true" />
+
+    <com.google.android.material.materialswitch.MaterialSwitch
+        android:id="@+id/switchDepth"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:text="深度推理 (Depth API)"
+        android:checked="true" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textColor="#8A9BB8"
+        android:textSize="11sp"
+        android:text="坐在显示器前请关深度：屏幕画面会干扰 AR" />
+
+    <TextView
+        android:id="@+id/labelScale"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:textColor="#8A9BB8"
+        android:text="尺度 meters/block = 0.35" />
+
+    <SeekBar
+        android:id="@+id/seekScale"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:max="100"
+        android:progress="35" />
+
+    <TextView
+        android:id="@+id/labelResponse"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:textColor="#8A9BB8"
+        android:text="响应/稳定 = 50%（0稳 100跟手）" />
+
+    <SeekBar
+        android:id="@+id/seekResponse"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:max="100"
+        android:progress="50" />
+
+    <TextView
+        android:id="@+id/textArHint"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:textColor="#8A9BB8"
+        android:textSize="12sp"
+        android:text="TRACKING 且 fps 稳定 30 左右为理想。纹理丰富、光线好时精度更高。" />
+</LinearLayout>

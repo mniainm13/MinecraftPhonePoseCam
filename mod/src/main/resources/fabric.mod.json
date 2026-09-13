@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "id": "phonecam",
+  "version": "${version}",
+  "name": "PhoneCam",
+  "description": "Control the Minecraft camera with your phone over LAN (yaw/pitch/position/zoom).",
+  "authors": [
+    "PhoneCam"
+  ],
+  "contact": {},
+  "license": "MIT",
+  "environment": "client",
+  "entrypoints": {
+    "client": [
+      "dev.phonecam.PhoneCamClient"
+    ],
+    "modmenu": [
+      "dev.phonecam.config.PhoneCamModMenu"
+    ]
+  },
+  "mixins": [
+    "phonecam.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": ">=0.19.5",
+    "minecraft": "~1.21.10",
+    "java": ">=21",
+    "fabric-api": "*"
+  },
+  "recommends": {
+    "modmenu": "*"
+  }
+}

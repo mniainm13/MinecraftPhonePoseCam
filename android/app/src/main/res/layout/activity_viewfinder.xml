@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#000000">
+
+    <TextureView
+        android:id="@+id/viewfinderTexture"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+    <ImageView
+        android:id="@+id/viewfinderImage"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:contentDescription="MJPEG"
+        android:scaleType="centerCrop"
+        android:visibility="gone" />
+
+    <!-- Debug overlay -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top"
+        android:background="#66000000"
+        android:orientation="vertical"
+        android:padding="10dp">
+
+        <TextView
+            android:id="@+id/debugTitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="DEBUG 取景器"
+            android:textColor="#FF3B30"
+            android:textSize="13sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/debugStream"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:fontFamily="monospace"
+            android:text="stream: –"
+            android:textColor="#7DDEA2"
+            android:textSize="11sp" />
+
+        <TextView
+            android:id="@+id/debugVideo"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:fontFamily="monospace"
+            android:text="video: –"
+            android:textColor="#E8EEF8"
+            android:textSize="11sp" />
+
+        <TextView
+            android:id="@+id/debugCodec"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:fontFamily="monospace"
+            android:text="codec: –"
+            android:textColor="#E8EEF8"
+            android:textSize="11sp" />
+
+        <TextView
+            android:id="@+id/debugFps"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:fontFamily="monospace"
+            android:text="render: –"
+            android:textColor="#F5C451"
+            android:textSize="11sp" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:gravity="center_horizontal"
+        android:orientation="horizontal"
+        android:padding="12dp">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnArDebug"
+            style="@style/Widget.Material3.Button.TonalButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="AR 调试" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnCloseDebug"
+            style="@style/Widget.Material3.Button.OutlinedButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="12dp"
+            android:text="关闭" />
+    </LinearLayout>
+</FrameLayout>

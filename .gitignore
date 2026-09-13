@@ -1,0 +1,43 @@
+# Build
+**/build/
+**/.gradle/
+**/.cxx/
+**/captures/
+**/.externalNativeBuild/
+**/local.properties
+**/*.apk.idsig
+
+# IDE
+.idea/
+*.iml
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Dist / release binaries (keep folder, ignore zips by default)
+dist/*.zip
+releases/
+stream_host/PhoneCamStream/
+stream_host/**/*.log
+stream_host/**/*.err
+stream_host/**/*.out
+stream_host/**/*.h264
+stream_host/**/*.obj
+stream_host/**/*.pdb
+stream_host/ui/node_modules/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# Secrets / machine-local
+*.keystore
+*.jks
+.env
+
+# Demo/reference binaries
+docs/gl-blur-handoff/download/
+
+tools/*.log
+tools/*.err

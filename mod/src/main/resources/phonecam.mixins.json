@@ -1,0 +1,12 @@
+{
+  "required": true,
+  "package": "dev.phonecam.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "client": [
+    "CameraMixin",
+    "GameRendererMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

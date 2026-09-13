@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">PhoneCam</string>
+    <string name="hint_host">PC IP（如 192.168.1.23）</string>
+    <string name="hint_port">端口</string>
+    <string name="btn_start">开始推流</string>
+    <string name="btn_stop">停止</string>
+    <string name="btn_calibrate">校准零点</string>
+    <string name="label_status">状态：未连接</string>
+    <string name="label_zoom">缩放</string>
+    <string name="label_sensitivity">灵敏度</string>
+    <string name="invert_y">反转 Y 轴</string>
+</resources>
