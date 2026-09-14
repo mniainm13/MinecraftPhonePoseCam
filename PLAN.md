@@ -1,6 +1,5 @@
 # PhoneCam — 手机空间位姿控制 Minecraft 摄像机
 
-> 项目路径：`F:\workspace\mc-phone-cam`
 > 目标：手机像 VR 设备一样，用空间位置 / 角度 / 缩放驱动游戏内摄像机
 
 ---
@@ -15,7 +14,7 @@
 | Java | **21** | MC 1.21.x 要求 |
 | Mod 侧 | 客户端 only | 摄像机是纯客户端属性，服务器无需装 mod |
 
-会话标题里写过 1.21.1，按你最新消息统一为 **1.21.10**。
+会话标题里写过 1.21.1，按最新消息统一为 **1.21.10**。
 
 ---
 
@@ -178,7 +177,6 @@
 ## 7. 仓库结构（建议）
 
 ```
-F:\workspace\mc-phone-cam\
 ├── PLAN.md
 ├── protocol/
 │   └── pose-v1.md          # 协议文档 + 示例
@@ -238,14 +236,14 @@ F:\workspace\mc-phone-cam\
 
 ### 优先级（已更新）
 
-1. **串流延迟/卡顿**（当前）— 优化 dxcam+ffmpeg；原生 DXGI→NVENC 需 MSVC，**不装 C 盘**，暂缓
+1. **串流延迟/卡顿**（当前）— 优化 dxcam+ffmpeg；原生 DXGI→NVENC 需 MSVC
 2. **6DoF** — ARCore 或 IMU+缩放平移，Mod 已有 pos 通道
 3. **声音推流** — 列后（WASAPI loopback → AAC/Opus）
-4. 磁盘：依赖优先 `F:\workspace\tools`，见全局 AGENTS.md
+4. 大型工具链与依赖优先装在非系统盘，避免占满 C 盘
 
 ### M5 — 画面回传手机（「手持手机在游戏里拍摄」）（5–10 天）
 - [ ] PC 侧采集游戏画面（Windows Graphics Capture / MC framebuffer 截帧）
-- [ ] 编码：H.264 硬编（NVENC，本机 RTX 5070 Ti）
+- [ ] 编码：H.264 硬编（NVENC）
 - [ ] 低延迟推流：WebRTC 或 MJPEG over HTTP（MVP 可先 MJPEG）
 - [ ] 手机全屏播放 + 叠加位姿 UI；开「摄像机模式」时桌面可不看屏
 - [ ] 端到端延迟目标：< 80–120ms（局域网）

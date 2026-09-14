@@ -19,11 +19,11 @@
 |------|------|
 | `mod/` | Fabric 客户端 mod（相机位姿 / FOV） |
 | `android/` | PhoneCam App（位姿发送 + 取景器） |
-| `stream_host/` | 原生推流主机 `phonecam_enc.exe` + 便携包脚本 |
+| `stream_host/` | 原生推流主机源码 + 便携包脚本（成品见 Release） |
 | `protocol/` | 位姿 JSON 协议 |
-| `docs/` | 调研与归档 |
+| `docs/` | 分发说明与归档 |
 | `tools/` | mock_sender 等联调工具 |
-| `dist/` | 本地构建产物（jar / apk / release zip） |
+| `dist/` | 本地构建产物（不入库，见 Release） |
 
 ## 端口
 
@@ -99,7 +99,6 @@ python tools/mock_sender.py --mode circle --hz 60
 - 架构与里程碑：[PLAN.md](PLAN.md)
 - 位姿协议：[protocol/pose-v1.md](protocol/pose-v1.md)
 - 归档快照：[docs/ARCHIVE-2026-09-13.md](docs/ARCHIVE-2026-09-13.md)
-- 声音调研（未实现）：[docs/audio-streaming-research.md](docs/audio-streaming-research.md)
 
 ## License
 

@@ -14,8 +14,9 @@
 .DS_Store
 Thumbs.db
 
-# Dist / release binaries (keep folder, ignore zips by default)
-dist/*.zip
+# Dist / release binaries (keep folder)
+dist/*
+!dist/.gitkeep
 releases/
 stream_host/PhoneCamStream/
 stream_host/**/*.log
@@ -24,7 +25,8 @@ stream_host/**/*.out
 stream_host/**/*.h264
 stream_host/**/*.obj
 stream_host/**/*.pdb
-stream_host/ui/node_modules/
+stream_host/**/*.exe
+stream_host/**/node_modules/
 
 # Python
 __pycache__/
@@ -36,8 +38,7 @@ __pycache__/
 *.jks
 .env
 
-# Demo/reference binaries
-docs/gl-blur-handoff/download/
-
+# One-off / local helper noise
+tools/gh_auth_*
 tools/*.log
 tools/*.err
