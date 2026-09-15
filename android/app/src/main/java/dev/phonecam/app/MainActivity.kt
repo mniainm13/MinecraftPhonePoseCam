@@ -268,8 +268,7 @@ class MainActivity : AppCompatActivity() {
             runOnUiThread { pushBlur(bm, fw, fh) }
         }
         blurOn = prefs.getBoolean("blur_on", true)
-        frost.level = 2 // always strong; no strength slider
-        frost.intervalMs = (1000L / prefs.getInt("blur_fps", 20).coerceIn(10, 60))
+        applyBlurPrefs()
         // Match previous FrostBlur / capsule radii
         findViewById<FrostBlurView>(R.id.blurZoom)?.setCornerDp(22f)
         findViewById<FrostBlurView>(R.id.blurMode)?.setCornerDp(20f)
@@ -304,12 +303,101 @@ class MainActivity : AppCompatActivity() {
         switchDetails.isChecked = showDetails
         textPose.visibility = if (showDetails) View.VISIBLE else View.GONE
         findViewById<MaterialSwitch>(R.id.switchBlur).isChecked = blurOn
-        val bf = prefs.getInt("blur_fps", 20)
-        findViewById<Slider>(R.id.seekBlurFps).value = bf.toFloat()
-        findViewById<TextView>(R.id.labelBlurFps).text = "模糊帧率 $bf fps"
+        setupBlurSection()
         seekZoom.valueFrom = 0f
         seekZoom.valueTo = 1f
         seekZoom.value = zoomToNorm(1f.coerceIn(zoomMin, zoomMax))
+    }
+
+    /** Push saved blur prefs into renderer + toggle UI. */
+    private fun applyBlurPrefs() {
+        frost.level = if (blurOn) 2 else 0
+        frost.intervalMs = 1000L / prefs.getInt("blur_fps", 60).coerceIn(30, 120)
+        frost.resLevel = prefs.getInt("blur_res", 2).coerceIn(0, 3)
+    }
+
+    private fun updateBlurSummary() {
+        val fps = prefs.getInt("blur_fps", 60)
+        val state = if (blurOn) blurResLabel(prefs.getInt("blur_res", 2)) else "关"
+        findViewById<TextView>(R.id.blurSummary)?.text = "$state · ${fps}fps"
+    }
+
+    private fun setupBlurSection() {
+        val card = findViewById<FrostBlurView>(R.id.blurFloatCard)
+        val scrim = findViewById<View>(R.id.blurFloatScrim)
+        findViewById<View>(R.id.blurSectionHeader)?.setOnClickListener { showBlurCard(true) }
+        findViewById<View>(R.id.btnBlurClose)?.setOnClickListener { showBlurCard(false) }
+        scrim?.setOnClickListener { showBlurCard(false) }
+        card?.setCornerDp(24f)
+        card?.setFallbackColor(0xE61A2330.toInt())
+        updateBlurSummary()
+
+        val fps = prefs.getInt("blur_fps", 60)
+        val fpsGroup = findViewById<com.google.android.material.button.MaterialButtonToggleGroup>(R.id.groupBlurFps)
+        when (fps) {
+            30 -> fpsGroup.check(R.id.btnFps30)
+            90 -> fpsGroup.check(R.id.btnFps90)
+            120 -> fpsGroup.check(R.id.btnFps120)
+            else -> fpsGroup.check(R.id.btnFps60)
+        }
+        fpsGroup.addOnButtonCheckedListener { _, id, checked ->
+            if (!checked) return@addOnButtonCheckedListener
+            val f = when (id) {
+                R.id.btnFps30 -> 30
+                R.id.btnFps90 -> 90
+                R.id.btnFps120 -> 120
+                else -> 60
+            }
+            frost.intervalMs = 1000L / f
+            prefs.edit().putInt("blur_fps", f).apply()
+            updateBlurSummary()
+        }
+
+        val res = prefs.getInt("blur_res", 2)
+        val resGroup = findViewById<com.google.android.material.button.MaterialButtonToggleGroup>(R.id.groupBlurRes)
+        when (res) {
+            0 -> resGroup.check(R.id.btnResHigh)
+            1 -> resGroup.check(R.id.btnResMid)
+            3 -> resGroup.check(R.id.btnResUltra)
+            else -> resGroup.check(R.id.btnResLow)
+        }
+        resGroup.addOnButtonCheckedListener { _, id, checked ->
+            if (!checked) return@addOnButtonCheckedListener
+            val r = when (id) {
+                R.id.btnResHigh -> 0
+                R.id.btnResMid -> 1
+                R.id.btnResUltra -> 3
+                else -> 2
+            }
+            frost.resLevel = r
+            if (blurOn) frost.level = 2
+            prefs.edit().putInt("blur_res", r).apply()
+            updateBlurSummary()
+        }
+    }
+
+    private fun showBlurCard(show: Boolean) {
+        val card = findViewById<View>(R.id.blurFloatCard) ?: return
+        val scrim = findViewById<View>(R.id.blurFloatScrim)
+        card.animate().cancel()
+        scrim?.animate()?.cancel()
+        if (show) {
+            card.visibility = View.VISIBLE
+            scrim?.visibility = View.VISIBLE
+            card.alpha = 0f
+            card.translationY = 16f
+            card.animate().alpha(1f).translationY(0f).setDuration(160).start()
+            scrim?.alpha = 0f
+            scrim?.animate()?.alpha(1f)?.setDuration(160)?.start()
+        } else {
+            card.animate().alpha(0f).translationY(10f).setDuration(120)
+                .withEndAction {
+                    card.visibility = View.GONE
+                    card.translationY = 0f
+                }.start()
+            scrim?.animate()?.alpha(0f)?.setDuration(120)
+                ?.withEndAction { scrim.visibility = View.GONE }?.start()
+        }
     }
 
     private fun applySavedFrame() {
@@ -361,10 +449,11 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun blurLevelLabel(l: Int) = when (l) {
-        0 -> "模糊强度 关"
-        1 -> "模糊强度 弱"
-        else -> "模糊强度 强"
+    private fun blurResLabel(r: Int) = when (r) {
+        0 -> "高 1/4"
+        1 -> "中 1/6"
+        3 -> "极低 1/12"
+        else -> "低 1/8"
     }
 
     /** Drop blur bitmap so FrostBlurView falls back to translucent fill. */
@@ -391,6 +480,7 @@ class MainActivity : AppCompatActivity() {
             findViewById<FrostBlurView>(R.id.blurCal),
             findViewById<FrostBlurView>(R.id.blurSheet),
             findViewById<FrostBlurView>(R.id.settingsPanel),
+            findViewById<FrostBlurView>(R.id.blurFloatCard),
         )
         for (t in targets) {
             if (t == null) continue
@@ -546,14 +636,7 @@ class MainActivity : AppCompatActivity() {
             frost.level = if (on) 2 else 0
             prefs.edit().putBoolean("blur_on", on).apply()
             if (!on) clearFrostBlur()
-        }
-        findViewById<Slider>(R.id.seekBlurFps).addOnChangeListener { _, v, from ->
-            if (from) {
-                val fps = v.toInt()
-                findViewById<TextView>(R.id.labelBlurFps).text = "模糊帧率 $fps fps"
-                frost.intervalMs = (1000L / fps.coerceIn(10, 60))
-                prefs.edit().putInt("blur_fps", fps).apply()
-            }
+            updateBlurSummary()
         }
         applySavedFrame()
         setupCropAndFrame()
@@ -663,6 +746,7 @@ class MainActivity : AppCompatActivity() {
                     v.visibility = View.GONE
                     v.translationY = 0f
                 }.start()
+            showBlurCard(false)
         }
         btnExpand.setImageResource(
             if (settingsOpen) R.drawable.ic_chevron_up else R.drawable.ic_chevron_down
