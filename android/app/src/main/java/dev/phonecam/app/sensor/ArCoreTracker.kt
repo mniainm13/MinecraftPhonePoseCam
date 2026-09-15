@@ -176,14 +176,10 @@ class ArCoreTracker(private val activity: Activity) {
     fun isDeviceSupported(): Boolean {
         return try {
             val a = ArCoreApk.getInstance().checkAvailability(activity)
-            // UNKNOWN_CHECKING etc. may still install; treat feature-missing as hard no.
-            when (a) {
-                ArCoreApk.Availability.REQUIRED_FEATURE_NOT_SUPPORTED,
-                ArCoreApk.Availability.UNKNOWN_ERROR,
-                -> false
-                else -> a.isSupported || a == ArCoreApk.Availability.SUPPORTED_NOT_INSTALLED ||
-                    a == ArCoreApk.Availability.SUPPORTED_APK_TOO_OLD
-            }
+            // Prefer isSupported; also allow "needs install / APK too old" so we can prompt.
+            a.isSupported ||
+                a == ArCoreApk.Availability.SUPPORTED_NOT_INSTALLED ||
+                a == ArCoreApk.Availability.SUPPORTED_APK_TOO_OLD
         } catch (e: Exception) {
             Log.w(TAG, "checkAvailability", e)
             false
