@@ -20,11 +20,10 @@ public class GameRendererMixin {
             float tickDelta,
             boolean changingFov,
             CallbackInfoReturnable<Float> cir) {
-        if (!CameraController.isEnabled()) {
+        if (!CameraController.isTrackingEnabled()) {
             return;
         }
-        long age = CameraController.dataAgeMs();
-        if (age < 0 || age > 500) {
+        if (CameraController.disconnectFade() <= 0f) {
             return;
         }
         float zoom = CameraController.zoom();

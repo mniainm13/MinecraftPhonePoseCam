@@ -5,7 +5,8 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
     <uses-permission android:name="android.permission.CAMERA" />
-    <uses-feature android:name="android.hardware.camera.ar" android:required="true" />
+    <!-- AR is optional: non-ARCore devices fall back to pure IMU (OrientationFusion). -->
+    <uses-feature android:name="android.hardware.camera.ar" android:required="false" />
     <uses-feature android:glEsVersion="0x00030001" android:required="true" />
 
     <application
@@ -14,9 +15,10 @@
         android:label="@string/app_name"
         android:theme="@style/Theme.PhoneCam"
         android:usesCleartextTraffic="true">
+        <!-- optional: do not force Play Store filter; runtime still prefers ARCore when available -->
         <meta-data
             android:name="com.google.ar.core"
-            android:value="required" />
+            android:value="optional" />
         <!-- Pin ~ARCore 1.40: newer VIO can be jankier on relative pose (arcore-android-sdk#1768) -->
         <meta-data
             android:name="com.google.ar.core.min_apk_version"

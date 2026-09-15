@@ -793,11 +793,24 @@ class MainActivity : AppCompatActivity() {
         if (useAr && ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
             == PackageManager.PERMISSION_GRANTED
         ) {
-            ar.calibrate(); ar.start()
-            if (ar.available) {
-                fusion.stop()
-                return
+            // Probe before requestInstall so non-ARCore phones never hit the install dialog.
+            if (ar.isDeviceSupported()) {
+                ar.calibrate(); ar.start()
+                if (ar.available) {
+                    fusion.stop()
+                    updateStatus("模式：自由 6DoF (ARCore)")
+                    return
+                }
             }
+            useAr = false
+            if (this::modePill.isInitialized) modePill.selected = 0
+            findViewById<Slider>(R.id.seekPosSens).isEnabled = false
+            findViewById<TextView>(R.id.labelPosSens).alpha = 0.4f
+            updateStatus("IMU 模式（无 ARCore）")
+            fusion.start(OrientationFusion.Callback { y, p, r ->
+                yaw = y; pitch = p; roll = r
+            })
+            return
         }
         if (useAr && ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
             != PackageManager.PERMISSION_GRANTED
@@ -810,6 +823,7 @@ class MainActivity : AppCompatActivity() {
         fusion.start(OrientationFusion.Callback { y, p, r ->
             yaw = y; pitch = p; roll = r
         })
+        if (streaming) updateStatus("IMU 模式（转向）")
     }
 
     private fun updateStatus(s: String) {

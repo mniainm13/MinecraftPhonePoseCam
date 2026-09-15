@@ -87,7 +87,9 @@ public final class CameraController {
         phonePosX = packet.posX;
         phonePosY = packet.posY;
         phonePosZ = packet.posZ;
-        phoneZoom = phoneZoom <= 0 ? 1.0f : packet.zoom;
+        float z = packet.zoom;
+        phoneZoom = (z <= 0f || Float.isNaN(z) || Float.isInfinite(z)) ? 1.0f : clamp(z, 0.25f, 4.0f);
+        curr.zoom = phoneZoom;
         lastPacketAt = System.currentTimeMillis();
         hasData = true;
     }
@@ -181,27 +183,68 @@ public final class CameraController {
         return a + d * t;
     }
 
+    /** One coherent smoothed pose sample per frame (yaw/pitch/roll/pos). */
+    public static final class Frame {
+        public float yaw, pitch, roll, x, y, z;
+    }
+
+    /**
+     * Tick smoothing once and snapshot all axes together so CameraMixin
+     * never mixes frames (avoids axis tearing when only yaw called tickSmooth).
+     */
+    public static Frame smoothFrame() {
+        tickSmooth();
+        Frame f = new Frame();
+        synchronized (smoothLock) {
+            f.yaw = smYaw;
+            f.pitch = smPitch;
+            f.roll = smRoll;
+            f.x = smX;
+            f.y = smY;
+            f.z = smZ;
+        }
+        return f;
+    }
+
+    /**
+     * Disconnect fade: 1.0 while fresh, linear to 0 between 500–1500ms stale,
+     * 0 after 1500ms (caller should restore vanilla camera).
+     */
+    public static float disconnectFade() {
+        long age = dataAgeMs();
+        if (age < 0) return 0f;
+        if (age <= 500L) return 1f;
+        if (age >= 1500L) return 0f;
+        return 1f - (age - 500f) / 1000f;
+    }
+
+    @Deprecated
     public static float smoothYaw() {
         tickSmooth();
         return smYaw;
     }
 
+    @Deprecated
     public static float smoothPitch() {
         return smPitch;
     }
 
+    @Deprecated
     public static float smoothRoll() {
         return smRoll;
     }
 
+    @Deprecated
     public static float smoothPosX() {
         return smX;
     }
 
+    @Deprecated
     public static float smoothPosY() {
         return smY;
     }
 
+    @Deprecated
     public static float smoothPosZ() {
         return smZ;
     }

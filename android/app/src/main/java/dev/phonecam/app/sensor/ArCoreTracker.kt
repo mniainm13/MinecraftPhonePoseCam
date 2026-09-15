@@ -169,7 +169,32 @@ class ArCoreTracker(private val activity: Activity) {
     private var orgFx = 0f; private var orgFy = 0f; private var orgFz = -1f
     private var hasOrigin = false
 
+    /**
+     * Non-blocking device support probe. False → caller must fall back to pure IMU.
+     * Does not prompt install.
+     */
+    fun isDeviceSupported(): Boolean {
+        return try {
+            val a = ArCoreApk.getInstance().checkAvailability(activity)
+            // UNKNOWN_CHECKING etc. may still install; treat feature-missing as hard no.
+            when (a) {
+                ArCoreApk.Availability.REQUIRED_FEATURE_NOT_SUPPORTED,
+                ArCoreApk.Availability.UNKNOWN_ERROR,
+                -> false
+                else -> a.isSupported || a == ArCoreApk.Availability.SUPPORTED_NOT_INSTALLED ||
+                    a == ArCoreApk.Availability.SUPPORTED_APK_TOO_OLD
+            }
+        } catch (e: Exception) {
+            Log.w(TAG, "checkAvailability", e)
+            false
+        }
+    }
+
     fun ensureInstalled(): Boolean {
+        if (!isDeviceSupported()) {
+            available = false
+            return false
+        }
         return try {
             when (ArCoreApk.getInstance().requestInstall(activity, !installRequested)) {
                 ArCoreApk.InstallStatus.INSTALLED -> {

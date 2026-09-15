@@ -17,6 +17,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
  * Phone pose offset on vanilla camera.
  * Position is applied relative to the entity eye (fresh each frame) so look
  * orbits from the moved camera, not a stale/orbit-around-player point.
+ * On disconnect: fade 500–1500ms toward identity, then fully release.
  */
 @Mixin(Camera.class)
 public abstract class CameraMixin {
@@ -38,18 +39,20 @@ public abstract class CameraMixin {
             boolean inverseView,
             float tickDelta,
             CallbackInfo ci) {
-        if (!CameraController.isEnabled() || focusedEntity == null) {
+        if (!CameraController.isTrackingEnabled() || focusedEntity == null) {
             return;
         }
-        long age = CameraController.dataAgeMs();
-        if (age < 0 || age > 500) {
+        float fade = CameraController.disconnectFade();
+        if (fade <= 0f) {
+            // Fully stale — leave vanilla camera (isTrackingEnabled may still be ON).
             return;
         }
 
+        CameraController.Frame pose = CameraController.smoothFrame();
         float baseYaw = focusedEntity.getYaw(tickDelta);
         float basePitch = focusedEntity.getPitch(tickDelta);
-        float yaw = baseYaw + CameraController.smoothYaw();
-        float pitch = MathHelper.clamp(basePitch + CameraController.smoothPitch(), -90f, 90f);
+        float yaw = baseYaw + pose.yaw * fade;
+        float pitch = MathHelper.clamp(basePitch + pose.pitch * fade, -90f, 90f);
 
         // Move camera first (from entity eye), then rotate around that point.
         Vec3d eye = new Vec3d(
@@ -58,9 +61,9 @@ public abstract class CameraMixin {
                         + focusedEntity.getEyeHeight(focusedEntity.getPose()),
                 MathHelper.lerp(tickDelta, focusedEntity.lastZ, focusedEntity.getZ()));
 
-        float dx = CameraController.smoothPosX();
-        float dy = CameraController.smoothPosY();
-        float dz = CameraController.smoothPosZ();
+        float dx = pose.x * fade;
+        float dy = pose.y * fade;
+        float dz = pose.z * fade;
         Vec3d camPos = eye;
         if (dx != 0f || dy != 0f || dz != 0f) {
             // Phone local → world using player yaw (not phone yaw)
@@ -73,7 +76,7 @@ public abstract class CameraMixin {
         this.setPos(camPos);
         this.setRotation(yaw, pitch);
 
-        float roll = CameraController.smoothRoll();
+        float roll = pose.roll * fade;
         if (Math.abs(roll) > 0.05f) {
             this.rotation.rotateZ((float) Math.toRadians(-roll));
         }
