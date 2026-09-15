@@ -88,7 +88,8 @@ public final class CameraController {
         phonePosY = packet.posY;
         phonePosZ = packet.posZ;
         float z = packet.zoom;
-        phoneZoom = (z <= 0f || Float.isNaN(z) || Float.isInfinite(z)) ? 1.0f : clamp(z, 0.25f, 4.0f);
+        // Only sanitize invalid values; range is owned by phone zoomMin/Max (no FOV clamp).
+        phoneZoom = (z <= 0f || Float.isNaN(z) || Float.isInfinite(z)) ? 1.0f : z;
         curr.zoom = phoneZoom;
         lastPacketAt = System.currentTimeMillis();
         hasData = true;
