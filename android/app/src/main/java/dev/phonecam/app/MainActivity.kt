@@ -37,6 +37,9 @@ import dev.phonecam.app.ui.FrostBlurRenderer
 import dev.phonecam.app.ui.FrostBlurView
 import dev.phonecam.app.ui.ModePillBar
 import dev.phonecam.app.ui.ZoomPillBar
+import dev.phonecam.app.ui.bridge.UiHost
+import dev.phonecam.app.ui.bridge.ViewfinderUiBridge
+import dev.phonecam.app.ui.bridge.ViewfinderUiState
 import org.json.JSONArray
 import kotlin.math.abs
 import kotlin.math.max
@@ -47,7 +50,7 @@ import kotlin.math.pow
  * top status + ⌄ settings, zoom chips, mode 转向/自由, shutter.
  * Details HUD hidden unless enabled. Auto-reconnects H.264.
  */
-class MainActivity : AppCompatActivity() {
+class MainActivity : AppCompatActivity(), ViewfinderUiBridge, UiHost {
 
     private val fusion by lazy { OrientationFusion(this) }
     private val ar by lazy { ArCoreTracker(this) }
@@ -513,7 +516,7 @@ class MainActivity : AppCompatActivity() {
                 val factor = d.scaleFactor
                 val curved = if (factor >= 1f) 1f + (factor - 1f) * 0.85f
                 else 1f - (1f - factor) * 0.85f
-                setZoom(zoom * curved, animate = false)
+                applyZoom(zoom * curved, animate = false)
                 return true
             }
         })
@@ -549,7 +552,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun setZoom(z: Float, animate: Boolean) {
+    private fun applyZoom(z: Float, animate: Boolean) {
         val target = z.coerceIn(zoomMin, zoomMax)
         if (animate) {
             zoomPill.animateTo(target)
@@ -616,7 +619,7 @@ class MainActivity : AppCompatActivity() {
         findViewById<View>(R.id.btnArDebug).setOnClickListener {
             startActivity(android.content.Intent(this, ArDebugActivity::class.java))
         }
-        findViewById<View>(R.id.btnSheet).setOnClickListener { openFullscreenViewfinder() }
+        findViewById<View>(R.id.btnSheet).setOnClickListener { launchFullscreenViewfinder() }
         btnShutter.setOnClickListener { if (streaming) stopStreaming() else startStreaming() }
         findViewById<View>(R.id.btnCalibrate).setOnClickListener {
             fusion.calibrate(); ar.calibrate(); toast("已校准")
@@ -671,7 +674,7 @@ class MainActivity : AppCompatActivity() {
 
         // seekZoom here is normalized 0..1 mapped non-linearly to zoomMin..zoomMax
         seekZoom.addOnChangeListener { _, v, from ->
-            if (from) setZoom(normToZoom(v), animate = false)
+            if (from) applyZoom(normToZoom(v), animate = false)
         }
 
         findViewById<View>(R.id.btnAddPreset).setOnClickListener {
@@ -840,7 +843,7 @@ class MainActivity : AppCompatActivity() {
         )
     }
 
-    private fun openFullscreenViewfinder() {
+    private fun launchFullscreenViewfinder() {
         streamCtrl.send(host(), 8091, streamBitrate, 30)
         // Server accepts one TCP client — free the slot before debug viewfinder
         h264?.stop()
@@ -946,4 +949,170 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun toast(s: String) = Toast.makeText(this, s, Toast.LENGTH_SHORT).show()
+
+    // --- ViewfinderUiBridge / UiHost (UI agent surface) ---
+
+    override fun currentState(): ViewfinderUiState = ViewfinderUiState(
+        statusText = textStatus.text?.toString().orEmpty(),
+        online = streaming,
+        streaming = streaming,
+        useAr = useAr,
+        arTracking = ar.tracking,
+        showDetails = showDetails,
+        poseHud = textPose.text?.toString().orEmpty(),
+        zoom = zoom,
+        zoomMin = zoomMin,
+        zoomMax = zoomMax,
+        presets = presets.toList(),
+        blurOn = blurOn,
+        blurFps = prefs.getInt("blur_fps", 60),
+        blurRes = prefs.getInt("blur_res", 2),
+        host = host(),
+        port = findViewById<EditText>(R.id.inputPort).text?.toString()?.toIntOrNull() ?: 42424,
+        bitrateMbps = streamBitrate,
+    )
+
+    override fun setStreaming(on: Boolean) {
+        if (on && !streaming) startStreaming()
+        else if (!on && streaming) stopStreaming()
+    }
+
+    override fun setModeAr(on: Boolean) = switchMode(on)
+
+    override fun calibrate() {
+        fusion.calibrate()
+        ar.calibrate()
+        toast("已校准")
+    }
+
+    override fun openSettings(open: Boolean) {
+        if (settingsOpen != open) toggleSettings()
+    }
+
+    override fun openBlurCard(open: Boolean) = showBlurCard(open)
+
+    override fun openFullscreenViewfinder() = launchFullscreenViewfinder()
+
+    override fun setZoom(value: Float, fromUser: Boolean) = applyZoom(value, animate = fromUser)
+
+    override fun setZoomPreset(index: Int) {
+        val z = presets.getOrNull(index) ?: return
+        applyZoom(z, animate = true)
+    }
+
+    override fun setZoomRange(min: Float, max: Float) {
+        if (min >= max || min < 0.05f) {
+            toast("缩放范围无效")
+            return
+        }
+        zoomMin = min
+        zoomMax = max
+        findViewById<EditText>(R.id.inputZoomMin).setText(min.toString())
+        findViewById<EditText>(R.id.inputZoomMax).setText(max.toString())
+        zoom = zoom.coerceIn(zoomMin, zoomMax)
+        updateZoomUi()
+        savePrefs()
+    }
+
+    override fun addZoomPreset(value: Float) {
+        if (value < 0.1f || value > 20f) {
+            toast("请输入 0.1–20 的数值")
+            return
+        }
+        presets.add(value)
+        sortPresets()
+        savePrefs()
+        rebuildPresetEditor()
+        rebuildZoomChips()
+    }
+
+    override fun removeZoomPreset(index: Int) {
+        if (presets.size <= 1 || index !in presets.indices) return
+        presets.removeAt(index)
+        sortPresets()
+        savePrefs()
+        rebuildPresetEditor()
+        rebuildZoomChips()
+    }
+
+    override fun setDetailsVisible(on: Boolean) {
+        showDetails = on
+        textPose.visibility = if (on) View.VISIBLE else View.GONE
+        if (this::switchDetails.isInitialized) switchDetails.isChecked = on
+        savePrefs()
+    }
+
+    override fun setBlurEnabled(on: Boolean) {
+        blurOn = on
+        frost.level = if (on) 2 else 0
+        prefs.edit().putBoolean("blur_on", on).apply()
+        if (!on) clearFrostBlur()
+        updateBlurSummary()
+        findViewById<MaterialSwitch>(R.id.switchBlur)?.isChecked = on
+    }
+
+    override fun setBlurFps(fps: Int) {
+        val f = fps.coerceIn(30, 120)
+        frost.intervalMs = 1000L / f
+        prefs.edit().putInt("blur_fps", f).apply()
+        updateBlurSummary()
+    }
+
+    override fun setBlurRes(resLevel: Int) {
+        val r = resLevel.coerceIn(0, 3)
+        frost.resLevel = r
+        if (blurOn) frost.level = 2
+        prefs.edit().putInt("blur_res", r).apply()
+        updateBlurSummary()
+    }
+
+    override fun setHost(host: String) {
+        findViewById<EditText>(R.id.inputHost).setText(host)
+        prefs.edit().putString("host", host).apply()
+    }
+
+    override fun setPosePort(port: Int) {
+        findViewById<EditText>(R.id.inputPort).setText(port.toString())
+    }
+
+    override fun setBitrate(mbps: Int) {
+        streamBitrate = mbps.coerceIn(2, 40)
+        findViewById<TextView>(R.id.labelBitrate).text = "推流码率 $streamBitrate Mbps"
+        streamCtrl.send(host(), 8091, streamBitrate, 30)
+        savePrefs()
+    }
+
+    override fun setBottomUiScale(scale: Float) {
+        val s = scale.coerceIn(0.4f, 2.0f)
+        findViewById<Slider>(R.id.seekBottomUi).value = s
+        findViewById<TextView>(R.id.labelBottomUi).text = "底部 UI 距底 ×%.1f".format(s)
+        applyBottomHeight(s)
+        prefs.edit().putFloat("bottom_ui", s).apply()
+    }
+
+    override fun setCropMode(landscape: Boolean) {
+        frost.cropMode = if (landscape) 1 else 0
+        prefs.edit().putInt("crop_mode", frost.cropMode).apply()
+    }
+
+    override fun setLandscapeFlip(flip: Boolean) {
+        frost.landscapeFlip = flip
+        prefs.edit().putBoolean("landscape_flip", flip).apply()
+    }
+
+    override fun setFrameAr(ar: Float) {
+        frost.frameAr = ar
+        prefs.edit().putFloat("frame_ar", ar).apply()
+    }
+
+    override fun openArDebug() {
+        startActivity(android.content.Intent(this, ArDebugActivity::class.java))
+    }
+
+    override fun showToast(message: String) = toast(message)
+
+    override fun onChromeVisibilityChanged(visible: Boolean) {
+        topChrome.visibility = if (visible) View.VISIBLE else View.GONE
+        bottomChrome.visibility = if (visible) View.VISIBLE else View.GONE
+    }
 }

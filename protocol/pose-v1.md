@@ -1,10 +1,13 @@
 # PhoneCam UDP Pose Protocol v1
 
-Transport: UDP, one JSON object per datagram, UTF-8.
-Default port: `42424` (mod binds `0.0.0.0:42424`).
-Target: same LAN as the Minecraft client.
+权威源：本文件 + `docs/ARCHITECTURE.md` 坐标摘要。  
+实现：C4 `UdpPoseSender` → A1 `PoseReceiver`。
 
-## Phone → PC (pose)
+- Transport: UDP，一包一 JSON 对象，UTF-8
+- Default port: **42424**（Mod 绑 `0.0.0.0:42424`）
+- Target: 与 Minecraft 客户端同一局域网
+
+## Phone → PC（位姿）
 
 ```json
 {
@@ -19,32 +22,38 @@ Target: same LAN as the Minecraft client.
 }
 ```
 
+| Field | Type | Unit | Meaning |
+|-------|------|------|---------|
+| `v` | int | — | 协议版本，当前 `1`；`!=1` 丢弃 |
+| `t` | long | ms | 手机时间戳 |
+| `yaw` | float | deg | 发送前已转到 MC 约定（0=+Z 南，+90=-X 西） |
+| `pitch` | float | deg | 正向下（MC） |
+| `roll` | float | deg | 度；M2+ |
+| `pos` | float[3] | m（格） | 校准锚点相对位移；`[right, up, forward]` 手机本地再由 Mod 用玩家 yaw 转世界 |
+| `zoom` | float | — | `1.0`=默认 FOV；`>1` 变窄。**Mod 不钳制范围**；`<=0/NaN` → 回 `1.0` |
+| `mode` | string | — | `look` \| `window` \| `free`（行为见 A2 HANDOFF；现状以 look 为主） |
+
+### 可选扩展（向后兼容）
+
 | Field | Type | Meaning |
 |-------|------|---------|
-| `v` | int | Protocol version, currently `1` |
-| `t` | long | Phone timestamp (ms) |
-| `yaw` | float | Degrees, MC convention after phone transform (0 = +Z / south, +90 = -X / west) |
-| `pitch` | float | Degrees, positive looks down (MC convention) |
-| `roll` | float | Degrees, optional for M2+ |
-| `pos` | float[3] | Relative translation (meters) from calibration anchor. `[right, up, forward]` in phone local space |
-| `zoom` | float | `1.0` = default FOV. `>1` zoom in (narrow FOV). Clamp `0.25`–`4.0` recommended |
-| `mode` | string | `look` \| `window` \| `free` |
+| `seq` | int | 发送侧自增；Mod 可统计乱序，不强制 |
 
-## Coordinate notes
+## 坐标系（必须）
 
-1. Convert Android device axes to right-handed Y-up before sending.
-2. On first connect / calibrate, the client stores yaw/pitch as the zero point.
-3. `pos` is applied relative to camera yaw on the PC side (M2).
+1. Android 设备轴 → **右手系 Y-up** 再发送。  
+2. 首次连接 / 校准：Mod 存 yaw/pitch（及 pos 清零）为零点。  
+3. `pos` 在 Mod 侧相对**玩家 yaw** 旋转到世界（非手机 yaw）。
 
-## Discovery (optional, later)
+## 发现（可选，未实现前勿当已存在）
 
-- Phone broadcasts: `{"v":1,"type":"DISCOVER"}` to `255.255.255.255:42424` or mDNS
-- PC replies: `{"v":1,"type":"HELLO","name":"PhoneCam","port":42424}`
+- Phone 广播：`{"v":1,"type":"DISCOVER"}` → `255.255.255.255:42424`
+- PC 单播：`{"v":1,"type":"HELLO","name":"PhoneCam","port":42424}`
 
-## Example mock
+## Mock
 
 ```bash
 python tools/mock_sender.py --mode circle --hz 60
 ```
 
-Then in Minecraft: press **F8** to enable tracking, **F9** to calibrate.
+游戏内 **F8** 开跟踪，**F9** 校准。

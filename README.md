@@ -96,6 +96,9 @@ python tools/mock_sender.py --mode circle --hz 60
 
 ## 设计文档
 
+- 多 agent 总则：[AGENTS.md](AGENTS.md)
+- 架构与模块边界：[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
+- 接口：[docs/interfaces/](docs/interfaces/)
 - 架构与里程碑：[PLAN.md](PLAN.md)
 - 位姿协议：[protocol/pose-v1.md](protocol/pose-v1.md)
 - 归档快照：[docs/ARCHIVE-2026-09-13.md](docs/ARCHIVE-2026-09-13.md)
