@@ -1,10 +1,14 @@
-# PhoneCam
+# MinecraftPhonePoseCam
+
+**Minecraft phone pose camera** — 用手机空间位姿（角度 / 位置 / 缩放）通过局域网控制 **Minecraft** 摄像机，并把游戏画面硬编推流到手机取景器。
+
+> EN: Control the Minecraft camera with your phone’s AR/IMU pose (head tracking + 6DoF) and stream the game to a low-latency phone viewfinder. Fabric 1.21.10 + Android + NVENC LAN stream host.
+>
+> 关键词：`minecraft pose camera` `phone head tracking` `fabric mod` `arcore` `opentrack` `minecraft viewfinder` `nvenc stream`
 
 > **Vibe coding** — 本项目主要由 AI 与开发者在对话中快速迭代完成（架构/协议/Mod/App/推流主机）。
 >
 > **构建标注** — 由 **小米 MiMo 桌面版 Beta** 构建。
-
-用手机空间位姿（角度 / 位置 / 缩放）通过局域网控制 **Minecraft** 摄像机，并把游戏画面硬编推流到手机取景器。
 
 | 组件 | 技术 |
 |------|------|
@@ -18,7 +22,7 @@
 | 路径 | 内容 |
 |------|------|
 | `mod/` | Fabric 客户端 mod（相机位姿 / FOV） |
-| `android/` | PhoneCam App（位姿发送 + 取景器） |
+| `android/` | 手机 App：位姿发送 + 取景器（PhoneCam） |
 | `stream_host/` | 原生推流主机源码 + 便携包脚本（成品见 Release） |
 | `protocol/` | 位姿 JSON 协议 |
 | `docs/` | 分发说明与归档 |
